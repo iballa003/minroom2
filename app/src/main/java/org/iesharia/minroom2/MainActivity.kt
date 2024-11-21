@@ -86,12 +86,13 @@ fun Greeting(modifier: Modifier = Modifier) {
         val tiposTareasget : List<TiposTareas> = TareasDao.getAllTipos()
         val tareas: List<Tareas> = TareasDao.getAll()
         //val tareasId: List<Tareas> = TareasDao.loadAllByIds(intArrayOf(1))
-        val tareaId : Tareas = TareasDao.getTareaById("1")
+        val tareaId : Tareas = TareasDao.getTareaById("2")
         tareasList = tareas
         tareasTipos = tiposTareasget
         Log.i("prueba", "Tareas: $tareaId")
-        TareasDao.updateTarea("Prueba", "Lorem ipsum",2,1)
+        TareasDao.delete(tareaId)
         Log.i("prueba", "Tareas: $tareaId")
+        db.close()
     } catch (e: Exception) {
         Log.i("prueba", "Error: $e")
     }
