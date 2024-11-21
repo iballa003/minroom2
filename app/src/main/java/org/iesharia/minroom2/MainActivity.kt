@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -58,50 +59,59 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
         LocalContext.current,
         AppDatabase::class.java, "database-name"
     ).build()
+    var tareasList : List<Tareas> = listOf()
     LaunchedEffect(key1 = {}) {
         CoroutineScope(Dispatchers.IO).launch {
     try {
-        val userDao = db.userDao()
-        val user = User(5, "John", "Doe")
-        Log.i("prueba", "Para insertar")
-        userDao.insertAll(user)
-        Log.i("prueba", "Insertar")
-        val users: List<User> = userDao.getAll()
-        Log.i("prueba", "Users: $users")
+        val TareasDao = db.TareasDao()
+        val tarea = Tareas(6, "Kotlin", "Lorem ipsum dolor sit amet, consectetur adipiscing elit.")
+//        Log.i("prueba", "Para insertar")
+//        TareasDao.insertAll(tarea)
+//        Log.i("prueba", "Insertar")
+        val tareas: List<Tareas> = TareasDao.getAll()
+        tareasList = tareas
+        Log.i("prueba", "Tareas: $tareas")
     } catch (e: Exception) {
         Log.i("prueba", "Error: $e")
     }
         }
     }
+//    Column {
+//        db.TareasDao().getAll().forEach { item ->
+//            Text(text = item.toString())
+//        }
+//    }
 }
 
 @Entity
-data class User(
-    @PrimaryKey val uid: Int,
-    @ColumnInfo(name = "first_name") val firstName: String?,
-    @ColumnInfo(name = "last_name") val lastName: String?
+data class Tareas(
+    @PrimaryKey val id: Int,
+    @ColumnInfo(name = "titulo") val titulo: String?,
+    @ColumnInfo(name = "descripcion") val descripcion: String?
 )
 
+
+
 @Dao
-interface UserDao {
-    @Query("SELECT * FROM user")
-    fun getAll(): List<User>
+interface TareasDao {
+    @Query("SELECT * FROM Tareas")
+    fun getAll(): List<Tareas>
 
-    @Query("SELECT * FROM user WHERE uid IN (:userIds)")
-    fun loadAllByIds(userIds: IntArray): List<User>
+    @Query("SELECT * FROM Tareas WHERE id IN (:tareas)")
+    fun loadAllByIds(tareas: IntArray): List<Tareas>
 
-    @Query("SELECT * FROM user WHERE first_name LIKE :first AND " +
-            "last_name LIKE :last LIMIT 1")
-    fun findByName(first: String, last: String): User
+    @Query("SELECT * FROM Tareas WHERE titulo LIKE :first AND " +
+            "descripcion LIKE :last LIMIT 1")
+    fun findByName(first: String, last: String): Tareas
 
     @Insert
-    fun insertAll(vararg users: User)
+    fun insertAll(vararg tareas: Tareas)
 
     @Delete
-    fun delete(user: User)
+    fun delete(tarea: Tareas)
 }
 
-@Database(entities = [User::class], version = 1)
+@Database(entities = [Tareas::class], version = 2)
 abstract class AppDatabase : RoomDatabase() {
-    abstract fun userDao(): UserDao
+    abstract fun TareasDao(): TareasDao
 }
