@@ -30,6 +30,7 @@ import androidx.room.Dao
 import androidx.room.Database
 import androidx.room.Delete
 import androidx.room.Entity
+import androidx.room.ForeignKey
 import androidx.room.Insert
 import androidx.room.PrimaryKey
 import androidx.room.Query
@@ -61,23 +62,34 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+//.fallbackToDestructiveMigration()
 @Composable
 fun Greeting(modifier: Modifier = Modifier) {
     val db = Room.databaseBuilder(
         LocalContext.current,
         AppDatabase::class.java, "database-name"
     ).build()
+
     var tareasList by remember { mutableStateOf<List<Tareas>?>(null) }
+    var tareasTipos by remember { mutableStateOf<List<TiposTareas>?>(null) }
+
     LaunchedEffect(key1 = {}) {
         CoroutineScope(Dispatchers.IO).launch {
     try {
         val TareasDao = db.TareasDao()
-        //val tarea = Tareas(6, "Kotlin", "Lorem ipsum dolor sit amet, consectetur adipiscing elit.")
+        //val tipotarea = TiposTareas(2,"Dificil")
+        //val tarea = Tareas(2, "Kotlin", "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",2)
+        //TareasDao.insertAllTipos(tipotarea)
+        //TareasDao.insertAll(tarea)
 //        Log.i("prueba", "Para insertar")
-//        TareasDao.insertAll(tarea)
+        //TareasDao.insertAllTipos(tipotarea)
+        val tiposTareasget : List<TiposTareas> = TareasDao.getAllTipos()
         val tareas: List<Tareas> = TareasDao.getAll()
+        //val tareasId: List<Tareas> = TareasDao.loadAllByIds(intArrayOf(1))
+        val tareaId : Tareas = TareasDao.getTareaById("2")
         tareasList = tareas
-        Log.i("prueba", "Tareas: $tareas")
+        tareasTipos = tiposTareasget
+        Log.i("prueba", "Tareas: $tareaId")
     } catch (e: Exception) {
         Log.i("prueba", "Error: $e")
     }
@@ -85,7 +97,8 @@ fun Greeting(modifier: Modifier = Modifier) {
     }
 
     Column(modifier = Modifier.padding(start = 15.dp, end = 15.dp)) {
-        tareasList?.forEach { item ->
+        tareasList?.forEach { tarea ->
+            val tipoTarea = tareasTipos?.firstOrNull { it.id == tarea.tipotareaId }
             Card(
                 modifier = Modifier.size(width = 200.dp, height = 160.dp).padding(top = 15.dp),
                 elevation = CardDefaults.cardElevation(
@@ -93,22 +106,32 @@ fun Greeting(modifier: Modifier = Modifier) {
                 ),
                 colors = CardDefaults.cardColors(containerColor = Color.LightGray),
             ){
-                Text(text = "Título de tarea: "+item.titulo.toString())
-                Text(text = "Descripción: "+item.descripcion.toString())
+                Text(text = "Título de tarea: "+tarea.titulo.toString())
+                Text(text = "Descripción: "+tarea.descripcion.toString())
+                Text(text = "Tipo tarea: ${tipoTarea?.titulo ?: "Desconocido"}")
             }
-//            Text(text = "Título de tarea: "+item.titulo.toString())
-//            Text(text = "Descripción: "+item.descripcion.toString())
         }
 
     }
 
 }
 
-@Entity
+
+@Entity (
+    foreignKeys = [
+        ForeignKey(
+            entity = TiposTareas::class,
+            parentColumns = arrayOf("id"),
+            childColumns = arrayOf("tipotareaId"),
+            onDelete = ForeignKey.CASCADE // Esto asegura que cuando un TipoTarea se elimine, se eliminen las tareas asociadas
+        )
+    ]
+)
 data class Tareas(
     @PrimaryKey val id: Int,
     @ColumnInfo(name = "titulo") val titulo: String?,
-    @ColumnInfo(name = "descripcion") val descripcion: String?
+    @ColumnInfo(name = "descripcion") val descripcion: String?,
+    @ColumnInfo(name = "tipotareaId") val tipotareaId: Int?
 )
 
 @Entity
@@ -122,8 +145,14 @@ interface TareasDao {
     @Query("SELECT * FROM Tareas")
     fun getAll(): List<Tareas>
 
+    @Query("SELECT * FROM TiposTareas")
+    fun getAllTipos(): List<TiposTareas>
+
     @Query("SELECT * FROM Tareas WHERE id IN (:tareas)")
     fun loadAllByIds(tareas: IntArray): List<Tareas>
+
+    @Query("SELECT * FROM Tareas WHERE id=:id")
+    fun getTareaById(id: String): Tareas
 
     @Query("SELECT * FROM Tareas WHERE titulo LIKE :first AND " +
             "descripcion LIKE :last LIMIT 1")
@@ -132,11 +161,14 @@ interface TareasDao {
     @Insert
     fun insertAll(vararg tareas: Tareas)
 
+    @Insert
+    fun insertAllTipos(vararg tareas: TiposTareas)
+
     @Delete
     fun delete(tarea: Tareas)
 }
 
-@Database(entities = [Tareas::class], version = 2)
+@Database(entities = [Tareas::class,TiposTareas::class], version = 4)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun TareasDao(): TareasDao
 }
