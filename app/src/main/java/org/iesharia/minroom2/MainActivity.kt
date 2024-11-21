@@ -90,7 +90,11 @@ data class Tareas(
     @ColumnInfo(name = "descripcion") val descripcion: String?
 )
 
-
+@Entity
+data class TiposTareas(
+    @PrimaryKey val id: Int,
+    @ColumnInfo(name = "titulo") val titulo: String?,
+)
 
 @Dao
 interface TareasDao {
