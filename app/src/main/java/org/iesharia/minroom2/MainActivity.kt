@@ -62,7 +62,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-//.fallbackToDestructiveMigration()
+//.fallbackToDestructiveMigration() Usado en caso de que quiera borrar la base de datos.
 @Composable
 fun Greeting(modifier: Modifier = Modifier) {
     val db = Room.databaseBuilder(
@@ -90,7 +90,7 @@ fun Greeting(modifier: Modifier = Modifier) {
         tareasList = tareas
         tareasTipos = tiposTareasget
         Log.i("prueba", "Tareas: $tareaId")
-        TareasDao.delete(tareaId)
+        //TareasDao.deleteTarea(tareaId)
         Log.i("prueba", "Tareas: $tareaId")
         db.close()
     } catch (e: Exception) {
@@ -160,6 +160,9 @@ interface TareasDao {
     @Query("UPDATE Tareas SET titulo = :titulo, descripcion = :descripcion, tipotareaId=:tipotareaId WHERE id =:id")
     fun updateTarea(titulo: String, descripcion: String, tipotareaId: Int,  id: Int)
 
+    @Query("UPDATE TiposTareas SET titulo = :titulo WHERE id =:id")
+    fun updateTipoTarea(titulo: String, id: Int)
+
     @Query("SELECT * FROM Tareas WHERE titulo LIKE :first AND " +
             "descripcion LIKE :last LIMIT 1")
     fun findByName(first: String, last: String): Tareas
@@ -171,7 +174,10 @@ interface TareasDao {
     fun insertAllTipos(vararg tareas: TiposTareas)
 
     @Delete
-    fun delete(tarea: Tareas)
+    fun deleteTarea(tarea: Tareas)
+
+    @Delete
+    fun deleteTipoTarea(tipotarea: TiposTareas)
 }
 
 @Database(entities = [Tareas::class,TiposTareas::class], version = 4)
