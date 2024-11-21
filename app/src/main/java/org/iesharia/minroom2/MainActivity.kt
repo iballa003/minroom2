@@ -13,6 +13,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
@@ -44,7 +48,6 @@ class MainActivity : ComponentActivity() {
             Minroom2Theme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Greeting(
-                        name = "Android",
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
@@ -54,20 +57,19 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
+fun Greeting(modifier: Modifier = Modifier) {
     val db = Room.databaseBuilder(
         LocalContext.current,
         AppDatabase::class.java, "database-name"
     ).build()
-    var tareasList : List<Tareas> = listOf()
+    var tareasList by remember { mutableStateOf<List<Tareas>?>(null) }
     LaunchedEffect(key1 = {}) {
         CoroutineScope(Dispatchers.IO).launch {
     try {
         val TareasDao = db.TareasDao()
-        val tarea = Tareas(6, "Kotlin", "Lorem ipsum dolor sit amet, consectetur adipiscing elit.")
+        //val tarea = Tareas(6, "Kotlin", "Lorem ipsum dolor sit amet, consectetur adipiscing elit.")
 //        Log.i("prueba", "Para insertar")
 //        TareasDao.insertAll(tarea)
-//        Log.i("prueba", "Insertar")
         val tareas: List<Tareas> = TareasDao.getAll()
         tareasList = tareas
         Log.i("prueba", "Tareas: $tareas")
@@ -76,11 +78,15 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
     }
         }
     }
-//    Column {
-//        db.TareasDao().getAll().forEach { item ->
-//            Text(text = item.toString())
-//        }
-//    }
+
+    Column {
+        tareasList?.forEach { item ->
+            Text(text = "Título de tarea: "+item.titulo.toString())
+            Text(text = "Descripción: "+item.descripcion.toString())
+        }
+
+    }
+
 }
 
 @Entity
