@@ -86,9 +86,11 @@ fun Greeting(modifier: Modifier = Modifier) {
         val tiposTareasget : List<TiposTareas> = TareasDao.getAllTipos()
         val tareas: List<Tareas> = TareasDao.getAll()
         //val tareasId: List<Tareas> = TareasDao.loadAllByIds(intArrayOf(1))
-        val tareaId : Tareas = TareasDao.getTareaById("2")
+        val tareaId : Tareas = TareasDao.getTareaById("1")
         tareasList = tareas
         tareasTipos = tiposTareasget
+        Log.i("prueba", "Tareas: $tareaId")
+        TareasDao.updateTarea("Prueba", "Lorem ipsum",2,1)
         Log.i("prueba", "Tareas: $tareaId")
     } catch (e: Exception) {
         Log.i("prueba", "Error: $e")
@@ -153,6 +155,9 @@ interface TareasDao {
 
     @Query("SELECT * FROM Tareas WHERE id=:id")
     fun getTareaById(id: String): Tareas
+
+    @Query("UPDATE Tareas SET titulo = :titulo, descripcion = :descripcion, tipotareaId=:tipotareaId WHERE id =:id")
+    fun updateTarea(titulo: String, descripcion: String, tipotareaId: Int,  id: Int)
 
     @Query("SELECT * FROM Tareas WHERE titulo LIKE :first AND " +
             "descripcion LIKE :last LIMIT 1")
