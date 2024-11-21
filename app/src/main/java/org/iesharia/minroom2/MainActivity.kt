@@ -9,6 +9,9 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,8 +21,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Database
@@ -79,10 +84,20 @@ fun Greeting(modifier: Modifier = Modifier) {
         }
     }
 
-    Column {
+    Column(modifier = Modifier.padding(start = 15.dp, end = 15.dp)) {
         tareasList?.forEach { item ->
-            Text(text = "Título de tarea: "+item.titulo.toString())
-            Text(text = "Descripción: "+item.descripcion.toString())
+            Card(
+                modifier = Modifier.size(width = 200.dp, height = 160.dp).padding(top = 15.dp),
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = 10.dp
+                ),
+                colors = CardDefaults.cardColors(containerColor = Color.LightGray),
+            ){
+                Text(text = "Título de tarea: "+item.titulo.toString())
+                Text(text = "Descripción: "+item.descripcion.toString())
+            }
+//            Text(text = "Título de tarea: "+item.titulo.toString())
+//            Text(text = "Descripción: "+item.descripcion.toString())
         }
 
     }
