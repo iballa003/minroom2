@@ -131,7 +131,7 @@ fun Greeting(modifier: Modifier = Modifier) {
 @Composable
 fun TareaCard(tarea : Tareas, database: AppDatabase, tiposTareas: List<TiposTareas>){
     var tituloTarea by remember { mutableStateOf(tarea.titulo.toString()) }
-    val tipoTarea = tareasTipos?.firstOrNull { it.id == tarea.tipotareaId }
+    val tipoTarea = tiposTareas?.firstOrNull { it.id == tarea.tipotareaId }
     Card(
         modifier = Modifier.size(width = 300.dp, height = 160.dp)
             .padding(top = 15.dp)
@@ -148,7 +148,7 @@ fun TareaCard(tarea : Tareas, database: AppDatabase, tiposTareas: List<TiposTare
                 onClick = {
                     CoroutineScope(Dispatchers.IO).launch {
                         try {
-                            val TareasDao = db.TareasDao()
+                            val TareasDao = database.TareasDao()
                             val tareaId : Tareas = TareasDao.getTareaById("4")
                             TareasDao.deleteTarea(tareaId)
                         }catch (e: Exception){
@@ -164,7 +164,7 @@ fun TareaCard(tarea : Tareas, database: AppDatabase, tiposTareas: List<TiposTare
                 onClick = {
                     CoroutineScope(Dispatchers.IO).launch {
                         try {
-                            val TareasDao = db.TareasDao()
+                            val TareasDao = database.TareasDao()
                             TareasDao.updateTarea("Pruebaa","Assssasdadad",2,1)
                             tituloTarea = tarea.titulo.toString()
                         }catch (e: Exception){
