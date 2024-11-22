@@ -40,9 +40,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.room.ColumnInfo
 import androidx.room.Dao
@@ -61,6 +63,7 @@ import kotlinx.coroutines.launch
 
 import org.iesharia.minroom2.ui.theme.Minroom2Theme
 
+// https://stackoverflow.com/questions/67111020/exposed-drop-down-menu-for-jetpack-compose
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -100,7 +103,7 @@ fun Greeting(modifier: Modifier = Modifier) {
         val tareas: List<Tareas> = TareasDao.getAll()
         tareasList = tareas
         tareasTipos = tiposTareasget
-        db.close()
+        Log.i("DAM2", "Tareas: $tareas")
     } catch (e: Exception) {
         Log.i("prueba", "Error: $e")
     }
@@ -108,133 +111,115 @@ fun Greeting(modifier: Modifier = Modifier) {
     }
     var openDialog by remember { mutableStateOf(false) }
     if (openDialog) {
-        modalWindow({openDialog = false})
+        ModalWindow({openDialog = false}, db)
     }
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(2.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Row(
 
-        ) {
-            Text(text = "Id", fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-            Text(text = "Título", fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-            Text(text = "Descripción", fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-            Text(text = "Tipo tarea", fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-            Text(text = "", fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-            Text(text = "", fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-        }
-
-        LazyColumn(
-            modifier = Modifier
-        ) {
-                items(1) {
-                    tareasList?.forEach { tarea ->
-                        val tipoTarea = tareasTipos?.firstOrNull { it.id == tarea.tipotareaId }
-                        Row(
-                            modifier = Modifier.fillMaxSize(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(text = tarea.id.toString(), modifier = Modifier.weight(1f))
-                            Text(text = tarea.titulo.toString(), modifier = Modifier.weight(1f))
-                            Text(text = tarea.descripcion.toString(), modifier = Modifier.weight(1f))
-                            Text(
-                                text = tipoTarea?.titulo ?: "Desconocido",
-                                modifier = Modifier.weight(1f).padding(start = 20.dp)
-                            )
-                            IconButton(
-                                onClick = {
-                                        CoroutineScope(Dispatchers.IO).launch {
-                                            try {
-                                                val TareasDao = db.TareasDao()
-                                                val tareaId : Tareas = TareasDao.getTareaById("2")
-                                                TareasDao.deleteTarea(tareaId)
-                                            }catch (e: Exception){
-                                                Log.i("prueba", "Error: $e")
-                                            }
-                                        }
-                                },
-                                modifier = Modifier.size(60.dp),
-                            ){
-                                Icon(imageVector = Icons.Filled.Delete, contentDescription = "Remove")
-                            }
-                            IconButton(
-                                onClick = {
-                                    CoroutineScope(Dispatchers.IO).launch {
-                                        try {
-                                            val TareasDao = db.TareasDao()
-                                            val tareaId : Tareas = TareasDao.getTareaById("2")
-                                            TareasDao.updateTarea("Pruebaa","Assssasdadad",2,1)
-                                        }catch (e: Exception){
-                                            Log.i("prueba", "Error: $e")
-                                        }
-                                    }
-                                },
-                                modifier = Modifier.size(60.dp),
-                            ){
-                                Icon(imageVector = Icons.Filled.Edit, contentDescription = "Remove")
-                            }
-                        }
-                        Spacer(modifier = Modifier.height(5.dp))
-                    }
-            }
-
+    Column(modifier = Modifier.padding(start = 15.dp, end = 15.dp, top = 30.dp)) {
+        tareasList?.forEach { tarea ->
+            TareaCard(tarea,db,tareasTipos)
         }
         Button(onClick = {
             openDialog = true
         },
             modifier = modifier.padding(top = 20.dp)) {
-            Text(text = "Crear nuevo registro")
+            Text(text = "Crear nueva tarea")
         }
 
     }
 
-
-//    Column(modifier = Modifier.padding(start = 15.dp, end = 15.dp)) {
-//        tareasList?.forEach { tarea ->
-//            val tipoTarea = tareasTipos?.firstOrNull { it.id == tarea.tipotareaId }
-//            Card(
-//                modifier = Modifier.size(width = 200.dp, height = 160.dp).padding(top = 15.dp),
-//                elevation = CardDefaults.cardElevation(
-//                    defaultElevation = 10.dp
-//                ),
-//                colors = CardDefaults.cardColors(containerColor = Color.LightGray),
-//            ){
-//                Text(text = "Título de tarea: "+tarea.titulo.toString())
-//                Text(text = "Descripción: "+tarea.descripcion.toString())
-//                Text(text = "Tipo tarea: ${tipoTarea?.titulo ?: "Desconocido"}")
-//            }
-//        }
-//
-//    }
-
 }
-
 @Composable
-fun modalWindow(onClose : () -> Unit){
-    var text by remember { mutableStateOf("") }
-    var text2 by remember { mutableStateOf("") }
+fun TareaCard(tarea : Tareas, database: AppDatabase, tiposTareas: List<TiposTareas>){
+    var tituloTarea by remember { mutableStateOf(tarea.titulo.toString()) }
+    val tipoTarea = tareasTipos?.firstOrNull { it.id == tarea.tipotareaId }
+    Card(
+        modifier = Modifier.size(width = 300.dp, height = 160.dp)
+            .padding(top = 15.dp)
+            .fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 10.dp
+        ),
+        colors = CardDefaults.cardColors(containerColor = Color.LightGray),
+    ){
+        Text(text = "Título de tarea: "+tituloTarea)
+        Row {
+            Text(text = "Descripción: "+tarea.descripcion.toString())
+            IconButton(
+                onClick = {
+                    CoroutineScope(Dispatchers.IO).launch {
+                        try {
+                            val TareasDao = db.TareasDao()
+                            val tareaId : Tareas = TareasDao.getTareaById("4")
+                            TareasDao.deleteTarea(tareaId)
+                        }catch (e: Exception){
+                            Log.i("prueba", "Error: $e")
+                        }
+                    }
+                },
+                modifier = Modifier.size(40.dp),
+            ){
+                Icon(imageVector = Icons.Filled.Delete, contentDescription = "Remove")
+            }
+            IconButton(
+                onClick = {
+                    CoroutineScope(Dispatchers.IO).launch {
+                        try {
+                            val TareasDao = db.TareasDao()
+                            TareasDao.updateTarea("Pruebaa","Assssasdadad",2,1)
+                            tituloTarea = tarea.titulo.toString()
+                        }catch (e: Exception){
+                            Log.i("prueba", "Error: $e")
+                        }
+                    }
+                },
+                modifier = Modifier.size(40.dp),
+            ){
+                Icon(imageVector = Icons.Filled.Edit, contentDescription = "Edit")
+            }
+
+        }
+
+        Text(text = "Tipo tarea: ${tipoTarea?.titulo ?: "Desconocido"}")
+    }
+}
+@Composable
+fun ModalWindow(onClose : () -> Unit, database: AppDatabase){
+    var id by remember { mutableStateOf("0") }
+    var titulo by remember { mutableStateOf("") }
+    var descripcion by remember { mutableStateOf("") }
+    var tipotarea by remember { mutableStateOf("0") }
+
     Dialog(onDismissRequest = {  }) {
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(375.dp)
-                .padding(16.dp),
+                .height(400.dp)
+                .padding(20.dp),
             shape = RoundedCornerShape(16.dp),
         ) {
             Column {
-                Text(text = "Crear tarea")
+                Text(text = "Crear tarea", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Spacer(Modifier.height(5.dp))
                 TextField(
-                    value = text,
-                    onValueChange = { text = it },
-                    label = { Text("Label") }
+                    value = id,
+                    onValueChange = { id = it },
+                    label = { Text("Id") }
                 )
                 TextField(
-                    value = text2,
-                    onValueChange = { text2 = it },
-                    label = { Text("Label") }
+                    value = titulo,
+                    onValueChange = { titulo = it },
+                    label = { Text("Titulo") }
+                )
+                TextField(
+                    value = descripcion,
+                    onValueChange = { descripcion = it },
+                    label = { Text("Descripcion") },
+                    modifier = Modifier.height(100.dp)
+                )
+                TextField(
+                    value = tipotarea,
+                    onValueChange = { tipotarea = it },
+                    label = { Text("Tipo tarea") },
                 )
                 Row(
                     modifier = Modifier
@@ -245,13 +230,23 @@ fun modalWindow(onClose : () -> Unit){
                         onClick = { onClose() },
                         modifier = Modifier.padding(8.dp),
                     ) {
-                        Text("Dismiss")
+                        Text("Cancelar")
                     }
                     TextButton(
-                        onClick = { onClose() },
+                        onClick = {
+                            CoroutineScope(Dispatchers.IO).launch {
+                                try {
+                                    val tarea = Tareas(id.toInt(),titulo, descripcion, tipotarea.toInt())
+                                    database.TareasDao().insertTarea(tarea)
+                                }catch (e: Exception){
+                                    Log.i("prueba", "Error: $e")
+                                }}
+
+                            onClose()
+                                  },
                         modifier = Modifier.padding(8.dp),
                     ) {
-                        Text("Confirm")
+                        Text("Confirmar")
                     }
                 }
 
@@ -307,7 +302,7 @@ interface TareasDao {
     fun findByName(first: String, last: String): Tareas
 
     @Insert
-    fun insertAll(vararg tareas: Tareas)
+    fun insertTarea(vararg tareas: Tareas)
 
     @Insert
     fun insertAllTipos(vararg tareas: TiposTareas)
