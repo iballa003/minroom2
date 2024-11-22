@@ -64,6 +64,7 @@ import kotlinx.coroutines.launch
 import org.iesharia.minroom2.ui.theme.Minroom2Theme
 
 // https://stackoverflow.com/questions/67111020/exposed-drop-down-menu-for-jetpack-compose
+// https://developer.android.com/develop/ui/compose/components/dialog
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -115,8 +116,10 @@ fun Greeting(modifier: Modifier = Modifier) {
     }
 
     Column(modifier = Modifier.padding(start = 15.dp, end = 15.dp, top = 30.dp)) {
+        var count : Int = 0
         tareasList?.forEach { tarea ->
-            TareaCard(tarea,db,tareasTipos)
+            count++
+            TareaCard(tarea,db,tareasTipos, count)
         }
         Button(onClick = {
             openDialog = true
@@ -129,9 +132,10 @@ fun Greeting(modifier: Modifier = Modifier) {
 
 }
 @Composable
-fun TareaCard(tarea : Tareas, database: AppDatabase, tiposTareas: List<TiposTareas>){
+fun TareaCard(tarea : Tareas, database: AppDatabase, tiposTareas: List<TiposTareas>?, id : Int){
     var tituloTarea by remember { mutableStateOf(tarea.titulo.toString()) }
     val tipoTarea = tiposTareas?.firstOrNull { it.id == tarea.tipotareaId }
+    val index : Int = id
     Card(
         modifier = Modifier.size(width = 300.dp, height = 160.dp)
             .padding(top = 15.dp)
@@ -164,9 +168,10 @@ fun TareaCard(tarea : Tareas, database: AppDatabase, tiposTareas: List<TiposTare
                 onClick = {
                     CoroutineScope(Dispatchers.IO).launch {
                         try {
-                            val TareasDao = database.TareasDao()
-                            TareasDao.updateTarea("Pruebaa","Assssasdadad",2,1)
-                            tituloTarea = tarea.titulo.toString()
+                            Log.i("Index", index.toString())
+//                            val TareasDao = database.TareasDao()
+//                            TareasDao.updateTarea("Pruebaa","Assssasdadad",2,1)
+//                            tituloTarea = tarea.titulo.toString()
                         }catch (e: Exception){
                             Log.i("prueba", "Error: $e")
                         }
