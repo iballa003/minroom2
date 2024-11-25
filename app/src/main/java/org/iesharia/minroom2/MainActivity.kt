@@ -100,8 +100,9 @@ fun Greeting(modifier: Modifier = Modifier) {
     var tareaView by remember { mutableStateOf(true) }
     var openDialog by remember { mutableStateOf(false) }
     if (openDialog) {
-        ModalWindow("Crear Tarea", {openDialog = false}, db)
+        ModalWindow(modalTitulo = if(tareaView) "Crear Tarea" else "Crear tipo Tarea", onClose = {openDialog = false}, database = db)
     }
+
     LaunchedEffect(key1 = {}) {// Solo se ejecuta una vez
         CoroutineScope(Dispatchers.IO).launch {
             try {
@@ -366,7 +367,7 @@ fun ModalWindow(modalTitulo : String, onClose : () -> Unit, database: AppDatabas
             Column {
                 Text(text = modalTitulo, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                 Spacer(Modifier.height(5.dp))
-                if (modalTitulo == "Crear Tarea"){
+                if (modalTitulo == "Crear Tarea" || modalTitulo == "Crear tipo Tarea"){
                     TextField(
                         value = id,
                         onValueChange = { id = it },
@@ -378,17 +379,19 @@ fun ModalWindow(modalTitulo : String, onClose : () -> Unit, database: AppDatabas
                     onValueChange = { titulo = it },
                     label = { Text("Titulo") }
                 )
-                TextField(
-                    value = descripcion,
-                    onValueChange = { descripcion = it },
-                    label = { Text("Descripcion") },
-                    modifier = Modifier.height(100.dp)
-                )
-                TextField(
-                    value = tipotarea,
-                    onValueChange = { tipotarea = it },
-                    label = { Text("Tipo tarea") },
-                )
+                if (modalTitulo != "Crear tipo Tarea"){
+                    TextField(
+                        value = descripcion,
+                        onValueChange = { descripcion = it },
+                        label = { Text("Descripcion") },
+                        modifier = Modifier.height(100.dp)
+                    )
+                    TextField(
+                        value = tipotarea,
+                        onValueChange = { tipotarea = it },
+                        label = { Text("Tipo tarea") },
+                    )
+                }
                 Row(
                     modifier = Modifier
                         .fillMaxWidth(),
@@ -413,6 +416,10 @@ fun ModalWindow(modalTitulo : String, onClose : () -> Unit, database: AppDatabas
                                             Log.i("DAM2","Editar")
                                             Log.i("DAM2", "Indice a actualizar: "+index.toString())
                                             database.TareasDao().updateTarea(titulo,descripcion,tipotarea.toInt(),index.toInt())
+                                        }
+                                        "Crear tipo Tarea" -> {
+                                            val tipoTarea = TiposTareas(id.toInt(),titulo)
+                                            database.TareasDao().insertTipoTarea(tipoTarea)
                                         }
                                         else -> print("x is neither 1 nor 2")
                                     }
@@ -541,7 +548,7 @@ interface TareasDao {
 
 
     @Insert
-    fun insertAllTipos(vararg tareas: TiposTareas)
+    fun insertTipoTarea(vararg tareas: TiposTareas)
 
 
     @Delete
