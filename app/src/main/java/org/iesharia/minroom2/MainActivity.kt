@@ -273,7 +273,7 @@ fun TipoTareaCard(tarea : TiposTareas, database: AppDatabase, id : Int){
     var openDialog by remember { mutableStateOf(false) }
 
     if (openDialog) {
-        ModalWindow("Editar",
+        ModalWindow("Editar Tipo Tarea",
             {openDialog = false},
             database,
             index.toString()
@@ -379,7 +379,7 @@ fun ModalWindow(modalTitulo : String, onClose : () -> Unit, database: AppDatabas
                     onValueChange = { titulo = it },
                     label = { Text("Titulo") }
                 )
-                if (modalTitulo != "Crear tipo Tarea"){
+                if (modalTitulo != "Crear tipo Tarea" && modalTitulo != "Editar Tipo Tarea"){
                     TextField(
                         value = descripcion,
                         onValueChange = { descripcion = it },
@@ -421,7 +421,11 @@ fun ModalWindow(modalTitulo : String, onClose : () -> Unit, database: AppDatabas
                                             val tipoTarea = TiposTareas(id.toInt(),titulo)
                                             database.TareasDao().insertTipoTarea(tipoTarea)
                                         }
-                                        else -> print("x is neither 1 nor 2")
+                                        else -> {
+                                            Log.i("DAM2","Editar")
+                                            Log.i("DAM2", "Indice a actualizar: "+index.toString())
+                                            database.TareasDao().updateTipoTarea(titulo, index.toInt())
+                                        }
                                     }
                                 }catch (e: Exception){
                                     Log.i("prueba", "Error: $e")
