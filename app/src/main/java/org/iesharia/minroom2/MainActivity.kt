@@ -1,8 +1,5 @@
 package org.iesharia.minroom2
 
-
-
-
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -98,13 +95,12 @@ fun Greeting(modifier: Modifier = Modifier) {
         AppDatabase::class.java, "database-name"
     ).build()
 
-
     var tareasList by remember { mutableStateOf<List<Tareas>?>(null) }
     var tareasTipos by remember { mutableStateOf<List<TiposTareas>?>(null) }
     var tareaView by remember { mutableStateOf(true) }
     var openDialog by remember { mutableStateOf(false) }
     if (openDialog) {
-        ModalWindow("Crear", {openDialog = false}, db)
+        ModalWindow("Crear Tarea", {openDialog = false}, db)
     }
     LaunchedEffect(key1 = {}) {// Solo se ejecuta una vez
         CoroutineScope(Dispatchers.IO).launch {
@@ -189,7 +185,7 @@ fun TareaCard(tarea : Tareas, database: AppDatabase, tiposTareas: List<TiposTare
     var openDialog by remember { mutableStateOf(false) }
 
     if (openDialog) {
-        ModalWindow("Editar",
+        ModalWindow("Editar Tarea",
             {openDialog = false},
             database,
             index.toString()
@@ -368,9 +364,9 @@ fun ModalWindow(modalTitulo : String, onClose : () -> Unit, database: AppDatabas
             shape = RoundedCornerShape(16.dp),
         ) {
             Column {
-                Text(text = modalTitulo+ " tarea", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Text(text = modalTitulo, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                 Spacer(Modifier.height(5.dp))
-                if (modalTitulo == "Crear"){
+                if (modalTitulo == "Crear Tarea"){
                     TextField(
                         value = id,
                         onValueChange = { id = it },
@@ -408,13 +404,17 @@ fun ModalWindow(modalTitulo : String, onClose : () -> Unit, database: AppDatabas
                         onClick = {
                             CoroutineScope(Dispatchers.IO).launch {
                                 try {
-                                    if (modalTitulo == "Crear"){
-                                        val tarea = Tareas(id.toInt(),titulo, descripcion, tipotarea.toInt())
-                                        database.TareasDao().insertTarea(tarea)
-                                    }else{
-                                        Log.i("DAM2","Editar")
-                                        Log.i("DAM2", "Indice a actualizar: "+index.toString())
-                                        database.TareasDao().updateTarea(titulo,descripcion,tipotarea.toInt(),index.toInt())
+                                    when (modalTitulo) {
+                                        "Crear Tarea" -> {
+                                            val tarea = Tareas(id.toInt(),titulo, descripcion, tipotarea.toInt())
+                                            database.TareasDao().insertTarea(tarea)
+                                        }
+                                        "Editar Tarea" -> {
+                                            Log.i("DAM2","Editar")
+                                            Log.i("DAM2", "Indice a actualizar: "+index.toString())
+                                            database.TareasDao().updateTarea(titulo,descripcion,tipotarea.toInt(),index.toInt())
+                                        }
+                                        else -> print("x is neither 1 nor 2")
                                     }
                                 }catch (e: Exception){
                                     Log.i("prueba", "Error: $e")
