@@ -121,10 +121,10 @@ fun Greeting(modifier: Modifier = Modifier) {
 
     Column(modifier = modifier.padding(start = 15.dp, end = 15.dp, top = 30.dp)) {
         Row {
-            Button(onClick = {tareaView = true}, enabled = !tareaView) {
+            Button(onClick = {tareaView = true}, enabled = !tareaView, modifier = modifier.weight(1f)) {
                 Text(text = "Tareas")
             }
-            Button(onClick = {tareaView = false}, enabled = tareaView) {
+            Button(onClick = {tareaView = false}, enabled = tareaView, modifier = modifier.weight(1f)) {
                 Text(text = "Tipos Tareas")
             }
         }
@@ -219,7 +219,7 @@ fun TareaCard(tarea : Tareas, database: AppDatabase, tiposTareas: List<TiposTare
         Card(
             modifier = Modifier
                 .size(width = 350.dp, height = 160.dp)
-                .padding(top = 15.dp)
+                .padding(top = 10.dp)
                 .fillMaxWidth(),
             elevation = CardDefaults.cardElevation(
                 defaultElevation = 10.dp
