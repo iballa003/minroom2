@@ -101,8 +101,7 @@ fun Greeting(modifier: Modifier = Modifier) {
 
     var tareasList by remember { mutableStateOf<List<Tareas>?>(null) }
     var tareasTipos by remember { mutableStateOf<List<TiposTareas>?>(null) }
-    var updateList by remember { mutableStateOf(false) }
-    var tareaView by remember { mutableStateOf(false) }
+    var tareaView by remember { mutableStateOf(true) }
     var openDialog by remember { mutableStateOf(false) }
     if (openDialog) {
         ModalWindow("Crear", {openDialog = false}, db)
@@ -128,13 +127,20 @@ fun Greeting(modifier: Modifier = Modifier) {
             Button(onClick = {tareaView = true}, enabled = !tareaView) {
                 Text(text = "Tareas")
             }
-            Button(onClick = {}) {
+            Button(onClick = {tareaView = false}, enabled = tareaView) {
                 Text(text = "Tipos Tareas")
             }
         }
-        tareasList?.forEach { tarea ->
-            Log.i("DAM2", tarea.id.toString())
-            TareaCard(tarea,db,tareasTipos, tarea.id)
+        if (tareaView){
+            tareasList?.forEach { tarea ->
+                Log.i("DAM2", tarea.id.toString())
+                TareaCard(tarea,db,tareasTipos, tarea.id)
+            }
+        }else{
+            tareasTipos?.forEach { tipotarea ->
+                Log.i("DAM2", tipotarea.id.toString())
+                TipoTareaCard(tipotarea,db, tipotarea.id)
+            }
         }
         Button(onClick = {
             Log.i("DAM2","crear")
@@ -142,6 +148,7 @@ fun Greeting(modifier: Modifier = Modifier) {
         },
             modifier = Modifier.padding(top = 20.dp)
         ) {
+
             Text(text = "Crear nueva tarea")
         }
         //createTareaCards(tareasList,db,tareasTipos, {updateList = true})
@@ -262,11 +269,87 @@ fun TareaCard(tarea : Tareas, database: AppDatabase, tiposTareas: List<TiposTare
 }
 
 @Composable
-fun TipoTareaCard(id : Int){
+fun TipoTareaCard(tarea : TiposTareas, database: AppDatabase, id : Int){
     var alertWindow by remember { mutableStateOf(false) }
     var showCard by remember { mutableStateOf(true) }
     val index : Int = id
     var openDialog by remember { mutableStateOf(false) }
+
+    if (openDialog) {
+        ModalWindow("Editar",
+            {openDialog = false},
+            database,
+            index.toString()
+        )
+    }
+    if (alertWindow){
+        AlertDialogModal(
+            {//Al darle a cancelar
+                alertWindow = false
+            },
+            {//Al darle a confirmar
+                CoroutineScope(Dispatchers.IO).launch {
+                    try {
+                        val TareasDao = database.TareasDao()
+                        val tareaId : TiposTareas = TareasDao.getTipoTareaById(index.toString())
+                        TareasDao.deleteTipoTarea(tareaId)
+                        showCard = false
+                    }catch (e: Exception){
+                        Log.i("prueba", "Error: $e")
+                    }
+                }
+                alertWindow = false
+            },
+            dialogTitle = "¿Seguros que quieres borrar?",
+            dialogText ="Una vez borrado, no podrás recuperarlo.",
+            icon = Icons.Default.Info
+        )
+    }// Fin del if
+    if(showCard){
+        Card(
+            modifier = Modifier
+                .size(width = 350.dp, height = 160.dp)
+                .padding(top = 15.dp)
+                .fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(
+                defaultElevation = 10.dp
+            ),
+            colors = CardDefaults.cardColors(containerColor = Color.LightGray),
+        ){
+            Spacer(Modifier.height(10.dp))
+            Row {
+                Text(text = "Título del tipo de tarea: "+tarea.titulo)
+                IconButton(
+                    onClick = {
+                        alertWindow = true
+                    },
+                    modifier = Modifier
+                        .size(40.dp)
+                        .weight(1f),
+                ){
+                    Icon(imageVector = Icons.Filled.Delete, contentDescription = "Remove")
+                }
+                IconButton(
+                    onClick = {
+                        CoroutineScope(Dispatchers.IO).launch {
+                            try {
+                                openDialog = true
+                            }catch (e: Exception){
+                                Log.i("prueba", "Error: $e")
+                            }
+                        }
+                    },
+                    modifier = Modifier
+                        .size(40.dp)
+                        .weight(1f),
+                ){
+                    Icon(imageVector = Icons.Filled.Edit, contentDescription = "Edit")
+                }
+
+
+            }
+        }
+    }
 }
 
 @Composable
@@ -435,6 +518,9 @@ interface TareasDao {
 
     @Query("SELECT * FROM Tareas WHERE id=:id")
     fun getTareaById(id: String): Tareas
+
+    @Query("SELECT * FROM TiposTareas WHERE id=:id")
+    fun getTipoTareaById(id: String): TiposTareas
 
 
     @Query("UPDATE Tareas SET titulo = :titulo, descripcion = :descripcion, tipotareaId=:tipotareaId WHERE id =:id")
