@@ -148,15 +148,18 @@ fun Greeting(modifier: Modifier = Modifier) {
 
             Text(text = if (tareaView)"Crear nueva tarea" else "Crear nuevo tipo tarea")
         }
-        //createTareaCards(tareasList,db,tareasTipos, {updateList = true})
     }
-
-
 }
 
 
 @Composable
-fun createTareaCards(tareasList: List<Tareas>?, database: AppDatabase, tareasTipos: List<TiposTareas>?, finished : () -> Unit){
+fun createTareaCards(
+    tareasList: List<Tareas>?,
+    database: AppDatabase,
+    tareasTipos: List<TiposTareas>?,
+    finished : () -> Unit
+)
+{
     var openDialog by remember { mutableStateOf(false) }
     if (openDialog) {
         ModalWindow("Crear", {openDialog = false}, database)
@@ -178,7 +181,13 @@ fun createTareaCards(tareasList: List<Tareas>?, database: AppDatabase, tareasTip
 
 
 @Composable
-fun TareaCard(tarea : Tareas, database: AppDatabase, tiposTareas: List<TiposTareas>?, id : Int){
+fun TareaCard(
+    tarea : Tareas,
+    database: AppDatabase,
+    tiposTareas: List<TiposTareas>?,
+    id : Int
+)
+{
     val tipoTarea = tiposTareas?.firstOrNull { it.id == tarea.tipotareaId }
     var alertWindow by remember { mutableStateOf(false) }
     var showCard by remember { mutableStateOf(true) }
@@ -266,7 +275,12 @@ fun TareaCard(tarea : Tareas, database: AppDatabase, tiposTareas: List<TiposTare
 }
 
 @Composable
-fun TipoTareaCard(tarea : TiposTareas, database: AppDatabase, id : Int){
+fun TipoTareaCard(
+    tarea : TiposTareas,
+    database: AppDatabase,
+    id : Int
+)
+{
     var alertWindow by remember { mutableStateOf(false) }
     var showCard by remember { mutableStateOf(true) }
     val index : Int = id
@@ -350,7 +364,12 @@ fun TipoTareaCard(tarea : TiposTareas, database: AppDatabase, id : Int){
 }
 
 @Composable
-fun ModalWindow(modalTitulo : String, onClose : () -> Unit, database: AppDatabase, index: String = "1"){
+fun ModalWindow(
+    modalTitulo : String,
+    onClose : () -> Unit,
+    database: AppDatabase,
+    index: String = "1")
+{
     var id by remember { mutableStateOf("0") }
     var titulo by remember { mutableStateOf("") }
     var descripcion by remember { mutableStateOf("") }
@@ -522,11 +541,6 @@ interface TareasDao {
     @Query("SELECT * FROM TiposTareas")
     fun getAllTipos(): List<TiposTareas>
 
-
-    @Query("SELECT * FROM Tareas WHERE id IN (:tareas)")
-    fun loadAllByIds(tareas: IntArray): List<Tareas>
-
-
     @Query("SELECT * FROM Tareas WHERE id=:id")
     fun getTareaById(id: String): Tareas
 
@@ -541,15 +555,8 @@ interface TareasDao {
     @Query("UPDATE TiposTareas SET titulo = :titulo WHERE id =:id")
     fun updateTipoTarea(titulo: String, id: Int)
 
-
-    @Query("SELECT * FROM Tareas WHERE titulo LIKE :first AND " +
-            "descripcion LIKE :last LIMIT 1")
-    fun findByName(first: String, last: String): Tareas
-
-
     @Insert
     fun insertTarea(vararg tareas: Tareas)
-
 
     @Insert
     fun insertTipoTarea(vararg tareas: TiposTareas)
