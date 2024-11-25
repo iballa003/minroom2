@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -67,13 +68,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-
-
-        Log.i("prueba", "Inicio")
-
-
-
-
         setContent {
             Minroom2Theme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
@@ -119,12 +113,18 @@ fun Greeting(modifier: Modifier = Modifier) {
     }
 
 
-    Column(modifier = modifier.padding(start = 15.dp, end = 15.dp, top = 30.dp)) {
+    Column(modifier = modifier.padding(start = 15.dp, end = 15.dp, top = 25.dp)) {
         Row {
-            Button(onClick = {tareaView = true}, enabled = !tareaView, modifier = modifier.weight(1f)) {
+            Button(onClick = {tareaView = true},
+                enabled = !tareaView,
+                modifier = modifier.weight(1f)
+            ) {
                 Text(text = "Tareas")
             }
-            Button(onClick = {tareaView = false}, enabled = tareaView, modifier = modifier.weight(1f)) {
+            Button(onClick = {tareaView = false},
+                enabled = tareaView,
+                modifier = modifier.weight(1f)
+            ) {
                 Text(text = "Tipos Tareas")
             }
         }
@@ -143,7 +143,9 @@ fun Greeting(modifier: Modifier = Modifier) {
             Log.i("DAM2","crear")
             openDialog = true
         },
-            modifier = Modifier.padding(top = 20.dp)
+            modifier = Modifier.padding(top = 15.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
+            shape = RoundedCornerShape(4.dp)
         ) {
 
             Text(text = if (tareaView)"Crear nueva tarea" else "Crear nuevo tipo tarea")
