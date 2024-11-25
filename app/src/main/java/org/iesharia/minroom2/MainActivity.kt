@@ -149,7 +149,7 @@ fun Greeting(modifier: Modifier = Modifier) {
             modifier = Modifier.padding(top = 20.dp)
         ) {
 
-            Text(text = "Crear nueva tarea")
+            Text(text = if (tareaView)"Crear nueva tarea" else "Crear nuevo tipo tarea")
         }
         //createTareaCards(tareasList,db,tareasTipos, {updateList = true})
     }
