@@ -17,7 +17,7 @@ abstract class AppDatabase : RoomDatabase() {
         fun getDatabase(context: Context):
                 org.iesharia.minroom2.AppDatabase { return INSTANCE ?:
         synchronized(this) {
-            val instance = Room.databaseBuilder( context.applicationContext, org.iesharia.minroom2.AppDatabase::class.java, "task_database" ).build()
+            val instance = Room.databaseBuilder( context.applicationContext, org.iesharia.minroom2.AppDatabase::class.java, "database-name" ).build()
             INSTANCE = instance
             instance
         }
