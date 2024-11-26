@@ -75,25 +75,36 @@ fun tareaApp(database: AppDatabase, modifier: Modifier = Modifier) {
         }
     }
 
-
-
-
-    Column(modifier = modifier.padding(start = 15.dp, end = 15.dp, top = 25.dp)
-        .verticalScroll(rememberScrollState())) {
+    Column(modifier = modifier.padding(start = 15.dp, end = 5.dp, top = 25.dp)) {
         Row {
-            Button(onClick = {tareaView = true},
+            Button(
+                onClick = { tareaView = true },
                 enabled = !tareaView,
                 modifier = modifier.weight(1f)
             ) {
                 Text(text = "Tareas")
             }
-            Button(onClick = {tareaView = false},
+            Button(
+                onClick = { tareaView = false },
                 enabled = tareaView,
                 modifier = modifier.weight(1f)
             ) {
                 Text(text = "Tipos Tareas")
             }
         }
+        Button(onClick = {
+            Log.i("DAM2","crear")
+            openDialog = true
+        },
+            modifier = Modifier.padding(top = 15.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
+            shape = RoundedCornerShape(4.dp)
+        ) {
+            Text(text = if (tareaView)"Crear nueva tarea" else "Crear nuevo tipo tarea")
+        }
+
+    Column(modifier = modifier.padding(start = 15.dp, end = 15.dp, top = 10.dp)
+        .verticalScroll(rememberScrollState())) {
         if (tareaView){
             tareasList?.forEach { tarea ->
                 Log.i("DAM2", tarea.id.toString())
@@ -105,18 +116,8 @@ fun tareaApp(database: AppDatabase, modifier: Modifier = Modifier) {
                 TipoTareaCard(tipotarea,database, tipotarea.id)
             }
         }
-        Button(onClick = {
-            Log.i("DAM2","crear")
-            openDialog = true
-        },
-            modifier = Modifier.padding(top = 15.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
-            shape = RoundedCornerShape(4.dp)
-        ) {
 
-
-            Text(text = if (tareaView)"Crear nueva tarea" else "Crear nuevo tipo tarea")
-        }
+    }
     }
 }
 
