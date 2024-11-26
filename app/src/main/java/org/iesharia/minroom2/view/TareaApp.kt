@@ -21,6 +21,10 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -49,19 +53,19 @@ import org.iesharia.minroom2.data.Tareas
 import org.iesharia.minroom2.data.TiposTareas
 
 @Composable
-fun tareaApp(database: AppDatabase, modifier: Modifier = Modifier) {
+fun tareaApp(
+    database: AppDatabase,
+    modifier: Modifier = Modifier
+) {
 
     var tareasList by remember { mutableStateOf<List<Tareas>?>(null) }
+    var tareasListTipo = mutableListOf<String>()
     var tareasTipos by remember { mutableStateOf<List<TiposTareas>?>(null) }
     var tareaView by remember { mutableStateOf(true) }
     var openDialog by remember { mutableStateOf(false) }
-    if (openDialog) {
-        ModalWindow(modalTitulo = if(tareaView) "Crear Tarea" else "Crear tipo Tarea", onClose = {openDialog = false}, database = database)
-    }
 
-
-    LaunchedEffect(key1 = {}) {// Solo se ejecuta una vez
-        CoroutineScope(Dispatchers.IO).launch {
+    LaunchedEffect(Unit) {// Solo se ejecuta una vez
+        CoroutineScope(Dispatchers.IO).launch { // Muestra el listado al principio y lo guarda en variables.
             try {
                 val TareasDao = database.TareasDao()
                 val tiposTareasget : List<TiposTareas> = TareasDao.getAllTipos()
@@ -74,7 +78,13 @@ fun tareaApp(database: AppDatabase, modifier: Modifier = Modifier) {
             }
         }
     }
-
+    tareasTipos?.forEach { tipotarea ->
+        tareasListTipo.add(tipotarea.titulo?:"Nada")
+    }
+    if (openDialog) {
+        ModalWindow(modalTitulo = if(tareaView) "Crear Tarea" else "Crear tipo Tarea", onClose = {openDialog = false}, database = database, index = "1", tareasListTipo)
+    }
+    Log.i("DAM2", tareasListTipo.toString())
     Column(modifier = modifier.padding(start = 15.dp, end = 5.dp, top = 25.dp)) {
         Row {
             Button(
@@ -92,6 +102,20 @@ fun tareaApp(database: AppDatabase, modifier: Modifier = Modifier) {
                 Text(text = "Tipos Tareas")
             }
         }
+
+    Column(modifier = modifier.padding(start = 15.dp, end = 15.dp, top = 10.dp)
+        .verticalScroll(rememberScrollState())) {
+        if (tareaView){
+            tareasList?.forEach { tarea ->
+                Log.i("DAM2", tarea.id.toString())
+                TareaCard(tarea,database,tareasTipos, tarea.id, tareasListTipo)
+            }
+        }else{
+            tareasTipos?.forEach { tipotarea ->
+                Log.i("DAM2", tipotarea.id.toString())
+                TipoTareaCard(tipotarea,database, tipotarea.id)
+            }
+        }
         Button(onClick = {
             Log.i("DAM2","crear")
             openDialog = true
@@ -102,21 +126,6 @@ fun tareaApp(database: AppDatabase, modifier: Modifier = Modifier) {
         ) {
             Text(text = if (tareaView)"Crear nueva tarea" else "Crear nuevo tipo tarea")
         }
-
-    Column(modifier = modifier.padding(start = 15.dp, end = 15.dp, top = 10.dp)
-        .verticalScroll(rememberScrollState())) {
-        if (tareaView){
-            tareasList?.forEach { tarea ->
-                Log.i("DAM2", tarea.id.toString())
-                TareaCard(tarea,database,tareasTipos, tarea.id)
-            }
-        }else{
-            tareasTipos?.forEach { tipotarea ->
-                Log.i("DAM2", tipotarea.id.toString())
-                TipoTareaCard(tipotarea,database, tipotarea.id)
-            }
-        }
-
     }
     }
 }
@@ -127,7 +136,8 @@ fun TareaCard(
     tarea : Tareas,
     database: AppDatabase,
     tiposTareas: List<TiposTareas>?,
-    id : Int
+    id : Int,
+    listDropdownTareas : List<String>
 )
 {
     val tipoTarea = tiposTareas?.firstOrNull { it.id == tarea.tipotareaId }
@@ -135,7 +145,6 @@ fun TareaCard(
     var showCard by remember { mutableStateOf(true) }
     val index : Int = id
     var openDialog by remember { mutableStateOf(false) }
-
 
     if (openDialog) {
         ModalWindow("Editar Tarea",
@@ -178,7 +187,7 @@ fun TareaCard(
             ),
             colors = CardDefaults.cardColors(containerColor = Color.LightGray),
         ){
-            Text(text = "Título de tarea: "+tarea.titulo)
+            Text(text = "Título de tarea: "+tarea.titulo, fontWeight = FontWeight.Bold)
             Row {
                 Text(text = "Descripción: "+tarea.descripcion.toString())
                 IconButton(
@@ -212,10 +221,6 @@ fun TareaCard(
 
 
             }
-
-
-
-
             Text(text = "Tipo tarea: ${tipoTarea?.titulo ?: "Desconocido"}")
         }
     }
@@ -315,18 +320,22 @@ fun TipoTareaCard(
 }
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ModalWindow(
     modalTitulo : String,
     onClose : () -> Unit,
     database: AppDatabase,
-    index: String = "1")
+    index: String = "1",
+    listDropdown : List<String> = mutableListOf<String>()
+)
 {
     var id by remember { mutableStateOf("1") }
     var titulo by remember { mutableStateOf("") }
     var descripcion by remember { mutableStateOf("") }
     var tipotarea by remember { mutableStateOf("1") }
-
+    var expanded by remember { mutableStateOf(false) }
+    var selectedOptionText by remember { mutableStateOf(listDropdown[0]) }
 
     Dialog(onDismissRequest = {  }) {
         Card(
@@ -361,12 +370,42 @@ fun ModalWindow(
                         modifier = Modifier.height(100.dp),
                         isError = descripcion.isEmpty()
                     )
-                    TextField(
-                        value = tipotarea,
-                        onValueChange = { tipotarea = it },
-                        label = { Text("Tipo tarea") },
-                        isError = tipotarea.isEmpty()
-                    )
+                    ExposedDropdownMenuBox(
+                        expanded = expanded,
+                        onExpandedChange = {
+                            expanded = !expanded
+                        }
+                    ) {
+                        TextField(
+                            readOnly = true,
+                            value = selectedOptionText,
+                            onValueChange = {},
+                            label = { Text("Tipo tarea") },
+                            isError = tipotarea.isEmpty(),
+                            trailingIcon = {
+                                ExposedDropdownMenuDefaults.TrailingIcon(
+                                    expanded = expanded
+                                )
+                            },
+                            colors = ExposedDropdownMenuDefaults.textFieldColors()
+                        )
+                        ExposedDropdownMenu(
+                            expanded = expanded,
+                            onDismissRequest = {
+                                expanded = false
+                            }
+                        ) {
+                            listDropdown.forEach { selectionOption ->
+                                DropdownMenuItem(
+                                    text = { Text(text = selectionOption) },
+                                    onClick = {
+                                        selectedOptionText = selectionOption
+                                        expanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
                 }
                 Row(
                     modifier = Modifier
