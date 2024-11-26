@@ -1,5 +1,6 @@
 package org.iesharia.minroom2
 
+
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -60,7 +61,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 
+
+
 import org.iesharia.minroom2.ui.theme.Minroom2Theme
+
+
 
 
 // https://stackoverflow.com/questions/67111020/exposed-drop-down-menu-for-jetpack-compose
@@ -81,6 +86,8 @@ class MainActivity : ComponentActivity() {
 }
 
 
+
+
 //.fallbackToDestructiveMigration() Usado en caso de que se necesite borrar la base de datos.
 @Composable
 fun Greeting(modifier: Modifier = Modifier) {
@@ -89,6 +96,7 @@ fun Greeting(modifier: Modifier = Modifier) {
         AppDatabase::class.java, "database-name"
     ).build()
 
+
     var tareasList by remember { mutableStateOf<List<Tareas>?>(null) }
     var tareasTipos by remember { mutableStateOf<List<TiposTareas>?>(null) }
     var tareaView by remember { mutableStateOf(true) }
@@ -96,6 +104,7 @@ fun Greeting(modifier: Modifier = Modifier) {
     if (openDialog) {
         ModalWindow(modalTitulo = if(tareaView) "Crear Tarea" else "Crear tipo Tarea", onClose = {openDialog = false}, database = db)
     }
+
 
     LaunchedEffect(key1 = {}) {// Solo se ejecuta una vez
         CoroutineScope(Dispatchers.IO).launch {
@@ -111,6 +120,8 @@ fun Greeting(modifier: Modifier = Modifier) {
             }
         }
     }
+
+
 
 
     Column(modifier = modifier.padding(start = 15.dp, end = 15.dp, top = 25.dp)) {
@@ -148,38 +159,43 @@ fun Greeting(modifier: Modifier = Modifier) {
             shape = RoundedCornerShape(4.dp)
         ) {
 
+
             Text(text = if (tareaView)"Crear nueva tarea" else "Crear nuevo tipo tarea")
         }
     }
 }
 
 
-@Composable
-fun createTareaCards(
-    tareasList: List<Tareas>?,
-    database: AppDatabase,
-    tareasTipos: List<TiposTareas>?,
-    finished : () -> Unit
-)
-{
-    var openDialog by remember { mutableStateOf(false) }
-    if (openDialog) {
-        ModalWindow("Crear", {openDialog = false}, database)
-    }
-    tareasList?.forEach { tarea ->
-        Log.i("DAM2", tarea.id.toString())
-        TareaCard(tarea,database,tareasTipos, tarea.id)
-    }
-    Button(onClick = {
-        Log.i("DAM2","start")
-        openDialog = true
-        finished()
-    },
-        modifier = Modifier.padding(top = 20.dp)
-    ) {
-        Text(text = "Crear nueva tarea")
-    }
-}
+
+
+//@Composable
+//fun createTareaCards(
+//    tareasList: List<Tareas>?,
+//    database: AppDatabase,
+//    tareasTipos: List<TiposTareas>?,
+//    finished : () -> Unit
+//)
+//{
+//    var openDialog by remember { mutableStateOf(false) }
+//    if (openDialog) {
+//        ModalWindow("Crear", {openDialog = false}, database)
+//    }
+//    tareasList?.forEach { tarea ->
+//        Log.i("DAM2", tarea.id.toString())
+//        TareaCard(tarea,database,tareasTipos, tarea.id)
+//    }
+//    Button(onClick = {
+//        Log.i("DAM2","start")
+//        openDialog = true
+//        finished()
+//    },
+//        modifier = Modifier.padding(top = 20.dp)
+//    ) {
+//        Text(text = "Crear nueva tarea")
+//    }
+//}
+
+
 
 
 @Composable
@@ -195,6 +211,7 @@ fun TareaCard(
     var showCard by remember { mutableStateOf(true) }
     val index : Int = id
     var openDialog by remember { mutableStateOf(false) }
+
 
     if (openDialog) {
         ModalWindow("Editar Tarea",
@@ -268,13 +285,18 @@ fun TareaCard(
                 }
 
 
+
+
             }
+
+
 
 
             Text(text = "Tipo tarea: ${tipoTarea?.titulo ?: "Desconocido"}")
         }
     }
 }
+
 
 @Composable
 fun TipoTareaCard(
@@ -287,6 +309,7 @@ fun TipoTareaCard(
     var showCard by remember { mutableStateOf(true) }
     val index : Int = id
     var openDialog by remember { mutableStateOf(false) }
+
 
     if (openDialog) {
         ModalWindow("Editar Tipo Tarea",
@@ -360,10 +383,13 @@ fun TipoTareaCard(
                 }
 
 
+
+
             }
         }
     }
 }
+
 
 @Composable
 fun ModalWindow(
@@ -372,10 +398,11 @@ fun ModalWindow(
     database: AppDatabase,
     index: String = "1")
 {
-    var id by remember { mutableStateOf("0") }
+    var id by remember { mutableStateOf("1") }
     var titulo by remember { mutableStateOf("") }
     var descripcion by remember { mutableStateOf("") }
-    var tipotarea by remember { mutableStateOf("0") }
+    var tipotarea by remember { mutableStateOf("1") }
+
 
     Dialog(onDismissRequest = {  }) {
         Card(
@@ -392,25 +419,29 @@ fun ModalWindow(
                     TextField(
                         value = id,
                         onValueChange = { id = it },
-                        label = { Text("Id") }
+                        label = { Text("Id") },
+                        isError = id.isEmpty()
                     )
                 }
                 TextField(
                     value = titulo,
                     onValueChange = { titulo = it },
-                    label = { Text("Titulo") }
+                    label = { Text("Titulo") },
+                    isError = titulo.isEmpty()
                 )
                 if (modalTitulo != "Crear tipo Tarea" && modalTitulo != "Editar Tipo Tarea"){
                     TextField(
                         value = descripcion,
                         onValueChange = { descripcion = it },
                         label = { Text("Descripcion") },
-                        modifier = Modifier.height(100.dp)
+                        modifier = Modifier.height(100.dp),
+                        isError = descripcion.isEmpty()
                     )
                     TextField(
                         value = tipotarea,
                         onValueChange = { tipotarea = it },
                         label = { Text("Tipo tarea") },
+                        isError = tipotarea.isEmpty()
                     )
                 }
                 Row(
@@ -430,30 +461,50 @@ fun ModalWindow(
                                 try {
                                     when (modalTitulo) {
                                         "Crear Tarea" -> {
-                                            val tarea = Tareas(id.toInt(),titulo, descripcion, tipotarea.toInt())
-                                            database.TareasDao().insertTarea(tarea)
+                                            if(id.isNotEmpty() && titulo.isNotEmpty() && descripcion.isNotEmpty() && tipotarea.isNotEmpty()){
+                                                Log.i("DAM2","Creado")
+                                                val tarea = Tareas(id.toInt(),titulo, descripcion, tipotarea.toInt())
+                                                database.TareasDao()
+                                                    .insertTarea(tarea)
+                                                onClose()
+                                            }
                                         }
                                         "Editar Tarea" -> {
-                                            Log.i("DAM2","Editar")
-                                            Log.i("DAM2", "Indice a actualizar: "+index.toString())
-                                            database.TareasDao().updateTarea(titulo,descripcion,tipotarea.toInt(),index.toInt())
+                                            if(index.isNotEmpty() && titulo.isNotEmpty() && descripcion.isNotEmpty() && tipotarea.isNotEmpty()){
+                                                Log.i("DAM2","Editar")
+                                                Log.i("DAM2", "Indice a actualizar: "+index)
+                                                database.TareasDao()
+                                                    .updateTarea(titulo,descripcion,tipotarea.toInt(),index.toInt())
+                                                onClose()
+                                            }
                                         }
                                         "Crear tipo Tarea" -> {
-                                            val tipoTarea = TiposTareas(id.toInt(),titulo)
-                                            database.TareasDao().insertTipoTarea(tipoTarea)
+                                            if(id.isNotEmpty() && titulo.isNotEmpty()){
+                                                val tipoTarea = TiposTareas(id.toInt(),titulo)
+                                                database.TareasDao()
+                                                    .insertTipoTarea(tipoTarea)
+                                                onClose()
+                                            }
                                         }
                                         else -> {
-                                            Log.i("DAM2","Editar")
-                                            Log.i("DAM2", "Indice a actualizar: "+index.toString())
-                                            database.TareasDao().updateTipoTarea(titulo, index.toInt())
+                                            if(index.isNotEmpty() && titulo.isNotEmpty()) {
+                                                Log.i("DAM2", "Editar")
+                                                Log.i("DAM2", "Indice a actualizar: " + index)
+                                                database.TareasDao()
+                                                    .updateTipoTarea(titulo, index.toInt())
+                                                onClose()
+                                            }
                                         }
                                     }
                                 }catch (e: Exception){
-                                    Log.i("prueba", "Error: $e")
+                                    Log.i("DAM2", "Error: $e")
                                 }}
 
 
-                            onClose()
+
+
+
+
                         },
                         modifier = Modifier.padding(8.dp),
                     ) {
@@ -462,10 +513,14 @@ fun ModalWindow(
                 }
 
 
+
+
             }
         }
     }
 }
+
+
 
 
 @Composable
@@ -509,6 +564,8 @@ fun AlertDialogModal(
         }
     )
 }
+
+
 @Entity (
     foreignKeys = [
         ForeignKey(
@@ -527,11 +584,15 @@ data class Tareas(
 )
 
 
+
+
 @Entity
 data class TiposTareas(
     @PrimaryKey val id: Int,
     @ColumnInfo(name = "titulo") val titulo: String?,
 )
+
+
 
 
 @Dao
@@ -540,32 +601,46 @@ interface TareasDao {
     fun getAll(): List<Tareas>
 
 
+
+
     @Query("SELECT * FROM TiposTareas")
     fun getAllTipos(): List<TiposTareas>
+
 
     @Query("SELECT * FROM Tareas WHERE id=:id")
     fun getTareaById(id: String): Tareas
 
+
     @Query("SELECT * FROM TiposTareas WHERE id=:id")
     fun getTipoTareaById(id: String): TiposTareas
+
+
 
 
     @Query("UPDATE Tareas SET titulo = :titulo, descripcion = :descripcion, tipotareaId=:tipotareaId WHERE id =:id")
     fun updateTarea(titulo: String, descripcion: String, tipotareaId: Int,  id: Int)
 
 
+
+
     @Query("UPDATE TiposTareas SET titulo = :titulo WHERE id =:id")
     fun updateTipoTarea(titulo: String, id: Int)
 
+
     @Insert
     fun insertTarea(vararg tareas: Tareas)
+
 
     @Insert
     fun insertTipoTarea(vararg tareas: TiposTareas)
 
 
+
+
     @Delete
     fun deleteTarea(tarea: Tareas)
+
+
 
 
     @Delete
@@ -573,7 +648,10 @@ interface TareasDao {
 }
 
 
+
+
 @Database(entities = [Tareas::class,TiposTareas::class], version = 4)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun TareasDao(): TareasDao
 }
+
