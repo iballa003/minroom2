@@ -4,8 +4,6 @@ import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
-import org.iesharia.minroom2.Tareas
-import org.iesharia.minroom2.TiposTareas
 
 @Dao
 interface TareasDao {
