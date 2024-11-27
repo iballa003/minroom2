@@ -1,5 +1,6 @@
 package org.iesharia.minroom2.view
 
+
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -39,12 +40,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import androidx.room.Room
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -52,39 +51,61 @@ import org.iesharia.minroom2.data.AppDatabase
 import org.iesharia.minroom2.data.Tareas
 import org.iesharia.minroom2.data.TiposTareas
 
+
+
+
 @Composable
 fun tareaApp(
     database: AppDatabase,
     modifier: Modifier = Modifier
 ) {
 
+
     var tareasList by remember { mutableStateOf<List<Tareas>?>(null) }
-    var tareasListTipo = mutableListOf<String>()
+    var tareasListTipo : MutableList<MutableList<String>> = mutableListOf()
     var tareasTipos by remember { mutableStateOf<List<TiposTareas>?>(null) }
     var tareaView by remember { mutableStateOf(true) }
     var openDialog by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {// Solo se ejecuta una vez
-        CoroutineScope(Dispatchers.IO).launch { // Muestra el listado al principio y lo guarda en variables.
+
+    // Función para cargar tareas
+    fun loadTareas() {
+        CoroutineScope(Dispatchers.IO).launch {
             try {
                 val TareasDao = database.TareasDao()
-                val tiposTareasget : List<TiposTareas> = TareasDao.getAllTipos()
-                val tareas: List<Tareas> = TareasDao.getAll()
+                val tareas = TareasDao.getAll()
+                val tiposTareas = TareasDao.getAllTipos()
                 tareasList = tareas
-                tareasTipos = tiposTareasget
+                tareasTipos = tiposTareas
                 Log.i("DAM2", "Tareas: $tareas")
             } catch (e: Exception) {
                 Log.i("prueba", "Error: $e")
             }
         }
     }
+
+
+    // Cargar datos al inicio
+    LaunchedEffect(Unit) {
+        loadTareas()
+    }
+
+
     tareasTipos?.forEach { tipotarea ->
-        tareasListTipo.add(tipotarea.titulo?:"Nada")
+        tareasListTipo.add(mutableListOf((tipotarea.id).toString(), tipotarea.titulo?:"Nada"))
     }
+
+
+    Log.i("DAM23", tareasListTipo.toString())
     if (openDialog) {
-        ModalWindow(modalTitulo = if(tareaView) "Crear Tarea" else "Crear tipo Tarea", onClose = {openDialog = false}, database = database, index = "1", tareasListTipo)
+        ModalWindow(modalTitulo = if(tareaView) "Crear Tarea" else "Crear tipo Tarea",
+            onClose = {openDialog = false},
+            database = database,
+            onTaskCreated = { loadTareas() },
+            index = "1",
+            listDropdown = tareasListTipo
+        )
     }
-    Log.i("DAM2", tareasListTipo.toString())
     Column(modifier = modifier.padding(start = 15.dp, end = 5.dp, top = 25.dp)) {
         Row {
             Button(
@@ -103,32 +124,37 @@ fun tareaApp(
             }
         }
 
-    Column(modifier = modifier.padding(start = 15.dp, end = 15.dp, top = 10.dp)
-        .verticalScroll(rememberScrollState())) {
-        if (tareaView){
-            tareasList?.forEach { tarea ->
-                Log.i("DAM2", tarea.id.toString())
-                TareaCard(tarea,database,tareasTipos, tarea.id, tareasListTipo)
+
+
+
+        Column(modifier = modifier.padding(start = 15.dp, end = 15.dp, top = 10.dp)
+            .verticalScroll(rememberScrollState())) {
+            if (tareaView){
+                tareasList?.forEach { tarea ->
+                    Log.i("DAM2", tarea.id.toString())
+                    TareaCard(tarea,database,tareasTipos, tarea.id, tareasListTipo, {loadTareas()})
+                }
+            }else{
+                tareasTipos?.forEach { tipotarea ->
+                    Log.i("DAM2", tipotarea.id.toString())
+                    TipoTareaCard(tipotarea,database, tipotarea.id, {loadTareas()})
+                }
             }
-        }else{
-            tareasTipos?.forEach { tipotarea ->
-                Log.i("DAM2", tipotarea.id.toString())
-                TipoTareaCard(tipotarea,database, tipotarea.id)
+            Button(onClick = {
+                Log.i("DAM2","crear")
+                openDialog = true
+            },
+                modifier = Modifier.padding(top = 15.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
+                shape = RoundedCornerShape(4.dp)
+            ) {
+                Text(text = if (tareaView)"Crear nueva tarea" else "Crear nuevo tipo tarea")
             }
         }
-        Button(onClick = {
-            Log.i("DAM2","crear")
-            openDialog = true
-        },
-            modifier = Modifier.padding(top = 15.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
-            shape = RoundedCornerShape(4.dp)
-        ) {
-            Text(text = if (tareaView)"Crear nueva tarea" else "Crear nuevo tipo tarea")
-        }
-    }
     }
 }
+
+
 
 
 @Composable
@@ -137,7 +163,8 @@ fun TareaCard(
     database: AppDatabase,
     tiposTareas: List<TiposTareas>?,
     id : Int,
-    listDropdownTareas : List<String>
+    listDropdownTareas : List<List<String>> = mutableListOf<MutableList<String>>(),
+    onTaskDeleted: () -> Unit // Callback para recargar la lista
 )
 {
     val tipoTarea = tiposTareas?.firstOrNull { it.id == tarea.tipotareaId }
@@ -146,11 +173,16 @@ fun TareaCard(
     val index : Int = id
     var openDialog by remember { mutableStateOf(false) }
 
+
+
+
     if (openDialog) {
-        ModalWindow("Editar Tarea",
-            {openDialog = false},
-            database,
-            index.toString()
+        ModalWindow(modalTitulo = "Editar Tarea",
+            onClose = {openDialog = false},
+            database = database,
+            onTaskCreated = {onTaskDeleted()}, // Callback para actualizar tareas
+            index = index.toString(),
+            listDropdown = listDropdownTareas
         )
     }
     if (alertWindow){
@@ -164,7 +196,7 @@ fun TareaCard(
                         val TareasDao = database.TareasDao()
                         val tareaId : Tareas = TareasDao.getTareaById(index.toString())
                         TareasDao.deleteTarea(tareaId)
-                        showCard = false
+                        onTaskDeleted()
                     }catch (e: Exception){
                         Log.i("prueba", "Error: $e")
                     }
@@ -216,10 +248,6 @@ fun TareaCard(
                 ){
                     Icon(imageVector = Icons.Filled.Edit, contentDescription = "Edit")
                 }
-
-
-
-
             }
             Text(text = "Tipo tarea: ${tipoTarea?.titulo ?: "Desconocido"}")
         }
@@ -231,7 +259,8 @@ fun TareaCard(
 fun TipoTareaCard(
     tarea : TiposTareas,
     database: AppDatabase,
-    id : Int
+    id : Int,
+    onTaskDeleted: () -> Unit // Callback para recargar la lista
 )
 {
     var alertWindow by remember { mutableStateOf(false) }
@@ -242,9 +271,10 @@ fun TipoTareaCard(
 
     if (openDialog) {
         ModalWindow("Editar Tipo Tarea",
-            {openDialog = false},
-            database,
-            index.toString()
+            onClose = {openDialog = false},
+            database = database,
+            onTaskCreated = {onTaskDeleted()}, // Callback para actualizar tareas
+            index = index.toString()
         )
     }
     if (alertWindow){
@@ -258,7 +288,7 @@ fun TipoTareaCard(
                         val TareasDao = database.TareasDao()
                         val tareaId : TiposTareas = TareasDao.getTipoTareaById(index.toString())
                         TareasDao.deleteTipoTarea(tareaId)
-                        showCard = false
+                        onTaskDeleted()
                     }catch (e: Exception){
                         Log.i("prueba", "Error: $e")
                     }
@@ -314,10 +344,28 @@ fun TipoTareaCard(
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
             }
         }
     }
 }
+
+
+
+
+
+
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -326,8 +374,9 @@ fun ModalWindow(
     modalTitulo : String,
     onClose : () -> Unit,
     database: AppDatabase,
+    onTaskCreated: (() -> Unit)? = null, // Callback para actualizar tareas
     index: String = "1",
-    listDropdown : List<String> = mutableListOf<String>()
+    listDropdown : List<List<String>> = mutableListOf<MutableList<String>>()
 )
 {
     var id by remember { mutableStateOf("1") }
@@ -335,7 +384,19 @@ fun ModalWindow(
     var descripcion by remember { mutableStateOf("") }
     var tipotarea by remember { mutableStateOf("1") }
     var expanded by remember { mutableStateOf(false) }
-    var selectedOptionText by remember { mutableStateOf(listDropdown[0]) }
+    var selectedOptionText by remember { mutableStateOf("") }
+    var selectedOptionIndex by remember { mutableStateOf("") }
+
+
+
+
+    if (modalTitulo != "Crear tipo Tarea" && modalTitulo != "Editar Tipo Tarea"){
+        selectedOptionText = listDropdown[0][1]
+        selectedOptionIndex = listDropdown[0][0]
+    }
+
+
+
 
     Dialog(onDismissRequest = {  }) {
         Card(
@@ -382,6 +443,7 @@ fun ModalWindow(
                             onValueChange = {},
                             label = { Text("Tipo tarea") },
                             isError = tipotarea.isEmpty(),
+                            modifier = Modifier.menuAnchor(),
                             trailingIcon = {
                                 ExposedDropdownMenuDefaults.TrailingIcon(
                                     expanded = expanded
@@ -397,9 +459,10 @@ fun ModalWindow(
                         ) {
                             listDropdown.forEach { selectionOption ->
                                 DropdownMenuItem(
-                                    text = { Text(text = selectionOption) },
+                                    text = { Text(text = selectionOption[1]) },
                                     onClick = {
-                                        selectedOptionText = selectionOption
+                                        selectedOptionText = selectionOption[1]
+                                        selectedOptionIndex = selectionOption[0]
                                         expanded = false
                                     }
                                 )
@@ -426,18 +489,26 @@ fun ModalWindow(
                                         "Crear Tarea" -> {
                                             if(id.isNotEmpty() && titulo.isNotEmpty() && descripcion.isNotEmpty() && tipotarea.isNotEmpty()){
                                                 Log.i("DAM2","Creado")
-                                                val tarea = Tareas(id.toInt(),titulo, descripcion, tipotarea.toInt())
+                                                val indexValue = selectedOptionIndex
+                                                Log.i("DAM2", "Indice a crear: "+indexValue)
+                                                val tarea = Tareas(id.toInt(),titulo, descripcion, indexValue.toInt())
                                                 database.TareasDao()
                                                     .insertTarea(tarea)
+                                                onTaskCreated?.invoke() // Actualizar la lista
                                                 onClose()
                                             }
                                         }
                                         "Editar Tarea" -> {
                                             if(index.isNotEmpty() && titulo.isNotEmpty() && descripcion.isNotEmpty() && tipotarea.isNotEmpty()){
                                                 Log.i("DAM2","Editar")
-                                                Log.i("DAM2", "Indice a actualizar: "+index)
+
+
+                                                val indexValue = selectedOptionIndex
+                                                Log.i("DAM2", "Indice a actualizar: "+indexValue)
                                                 database.TareasDao()
-                                                    .updateTarea(titulo,descripcion,tipotarea.toInt(),index.toInt())
+                                                    .updateTarea(titulo,descripcion,
+                                                        indexValue.toInt(),index.toInt())
+                                                onTaskCreated?.invoke() // Actualizar la lista
                                                 onClose()
                                             }
                                         }
@@ -446,6 +517,7 @@ fun ModalWindow(
                                                 val tipoTarea = TiposTareas(id.toInt(),titulo)
                                                 database.TareasDao()
                                                     .insertTipoTarea(tipoTarea)
+                                                onTaskCreated?.invoke() // Actualizar la lista
                                                 onClose()
                                             }
                                         }
@@ -455,6 +527,7 @@ fun ModalWindow(
                                                 Log.i("DAM2", "Indice a actualizar: " + index)
                                                 database.TareasDao()
                                                     .updateTipoTarea(titulo, index.toInt())
+                                                onTaskCreated?.invoke() // Actualizar la lista
                                                 onClose()
                                             }
                                         }
@@ -462,28 +535,16 @@ fun ModalWindow(
                                 }catch (e: Exception){
                                     Log.i("DAM2", "Error: $e")
                                 }}
-
-
-
-
-
-
                         },
                         modifier = Modifier.padding(8.dp),
                     ) {
                         Text("Confirmar")
                     }
                 }
-
-
-
-
             }
         }
     }
 }
-
-
 
 
 @Composable
@@ -527,3 +588,4 @@ fun AlertDialogModal(
         }
     )
 }
+
