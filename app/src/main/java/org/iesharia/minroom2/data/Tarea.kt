@@ -1,11 +1,13 @@
 package org.iesharia.minroom2.data
 
+
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
 
-@Entity (
+
+@Entity(
     foreignKeys = [
         ForeignKey(
             entity = TiposTareas::class,
@@ -16,7 +18,7 @@ import androidx.room.PrimaryKey
     ]
 )
 data class Tareas(
-    @PrimaryKey val id: Int,
+    @PrimaryKey(autoGenerate = true) val id: Int = 0, // autoGenerate habilitado
     @ColumnInfo(name = "titulo") val titulo: String?,
     @ColumnInfo(name = "descripcion") val descripcion: String?,
     @ColumnInfo(name = "tipotareaId") val tipotareaId: Int?

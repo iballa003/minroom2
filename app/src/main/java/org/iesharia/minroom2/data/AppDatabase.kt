@@ -6,10 +6,11 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 
 
-@Database(entities = [Tareas::class,TiposTareas::class], version = 4)
+// .fallbackToDestructiveMigration()
+@Database(entities = [Tareas::class,TiposTareas::class], version = 5)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun TareasDao():
-    TareasDao companion object {
+            TareasDao companion object {
         @Volatile
         private var INSTANCE: AppDatabase? = null
         fun getDatabase(context: Context):
@@ -22,4 +23,5 @@ abstract class AppDatabase : RoomDatabase() {
         }
     }
 }
+
 

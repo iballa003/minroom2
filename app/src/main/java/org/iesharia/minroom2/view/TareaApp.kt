@@ -47,11 +47,10 @@ import androidx.compose.ui.window.Dialog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.iesharia.minroom2.data.AppDatabase
 import org.iesharia.minroom2.data.Tareas
 import org.iesharia.minroom2.data.TiposTareas
-
-
 
 
 @Composable
@@ -61,11 +60,15 @@ fun tareaApp(
 ) {
 
 
+
+
     var tareasList by remember { mutableStateOf<List<Tareas>?>(null) }
     var tareasListTipo : MutableList<MutableList<String>> = mutableListOf()
     var tareasTipos by remember { mutableStateOf<List<TiposTareas>?>(null) }
     var tareaView by remember { mutableStateOf(true) }
     var openDialog by remember { mutableStateOf(false) }
+
+
 
 
     // Función para cargar tareas
@@ -85,15 +88,21 @@ fun tareaApp(
     }
 
 
+
+
     // Cargar datos al inicio
     LaunchedEffect(Unit) {
         loadTareas()
     }
 
 
+
+
     tareasTipos?.forEach { tipotarea ->
         tareasListTipo.add(mutableListOf((tipotarea.id).toString(), tipotarea.titulo?:"Nada"))
     }
+
+
 
 
     Log.i("DAM23", tareasListTipo.toString())
@@ -127,6 +136,10 @@ fun tareaApp(
 
 
 
+
+
+
+
         Column(modifier = modifier.padding(start = 15.dp, end = 15.dp, top = 10.dp)
             .verticalScroll(rememberScrollState())) {
             if (tareaView){
@@ -155,8 +168,6 @@ fun tareaApp(
 }
 
 
-
-
 @Composable
 fun TareaCard(
     tarea : Tareas,
@@ -172,8 +183,7 @@ fun TareaCard(
     var showCard by remember { mutableStateOf(true) }
     val index : Int = id
     var openDialog by remember { mutableStateOf(false) }
-
-
+    var modalData by remember { mutableStateOf<Tareas?>(null) }
 
 
     if (openDialog) {
@@ -182,7 +192,8 @@ fun TareaCard(
             database = database,
             onTaskCreated = {onTaskDeleted()}, // Callback para actualizar tareas
             index = index.toString(),
-            listDropdown = listDropdownTareas
+            listDropdown = listDropdownTareas,
+            preloadedDataTarea = modalData // Pasar los datos precargados
         )
     }
     if (alertWindow){
@@ -236,7 +247,11 @@ fun TareaCard(
                     onClick = {
                         CoroutineScope(Dispatchers.IO).launch {
                             try {
-                                openDialog = true
+                                val tarea = database.TareasDao().getTareaById(index.toString())
+                                withContext(Dispatchers.Main) {
+                                    openDialog = true
+                                    modalData = tarea
+                                }
                             }catch (e: Exception){
                                 Log.i("prueba", "Error: $e")
                             }
@@ -267,6 +282,7 @@ fun TipoTareaCard(
     var showCard by remember { mutableStateOf(true) }
     val index : Int = id
     var openDialog by remember { mutableStateOf(false) }
+    var modalData by remember { mutableStateOf<TiposTareas?>(null) }
 
 
     if (openDialog) {
@@ -274,7 +290,8 @@ fun TipoTareaCard(
             onClose = {openDialog = false},
             database = database,
             onTaskCreated = {onTaskDeleted()}, // Callback para actualizar tareas
-            index = index.toString()
+            index = index.toString(),
+            preloadedDataTipoTarea = modalData // Pasar los datos precargados
         )
     }
     if (alertWindow){
@@ -328,7 +345,11 @@ fun TipoTareaCard(
                     onClick = {
                         CoroutineScope(Dispatchers.IO).launch {
                             try {
-                                openDialog = true
+                                val tipotarea = database.TareasDao().getTipoTareaById(index.toString())
+                                withContext(Dispatchers.Main) {
+                                    openDialog = true
+                                    modalData = tarea
+                                }
                             }catch (e: Exception){
                                 Log.i("prueba", "Error: $e")
                             }
@@ -340,32 +361,10 @@ fun TipoTareaCard(
                 ){
                     Icon(imageVector = Icons.Filled.Edit, contentDescription = "Edit")
                 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
             }
         }
     }
 }
-
-
-
-
-
-
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -376,28 +375,36 @@ fun ModalWindow(
     database: AppDatabase,
     onTaskCreated: (() -> Unit)? = null, // Callback para actualizar tareas
     index: String = "1",
-    listDropdown : List<List<String>> = mutableListOf<MutableList<String>>()
+    listDropdown : List<List<String>> = mutableListOf<MutableList<String>>(),
+    preloadedDataTarea: Tareas? = null, // Datos precargados Tareas
+    preloadedDataTipoTarea: TiposTareas? = null // Datos precargados TipoTareas
 )
 {
-    var id by remember { mutableStateOf("1") }
-    var titulo by remember { mutableStateOf("") }
-    var descripcion by remember { mutableStateOf("") }
-    var tipotarea by remember { mutableStateOf("1") }
+    var titulo by remember { mutableStateOf(preloadedDataTarea?.titulo ?: "")}
+    var descripcion by remember { mutableStateOf(preloadedDataTarea?.descripcion ?: "") }
+    var tipotarea by remember { mutableStateOf(preloadedDataTarea?.tipotareaId?.toString() ?: "1") }
     var expanded by remember { mutableStateOf(false) }
     var selectedOptionText by remember { mutableStateOf("") }
     var selectedOptionIndex by remember { mutableStateOf("") }
 
 
-
-
-    if (modalTitulo != "Crear tipo Tarea" && modalTitulo != "Editar Tipo Tarea"){
-        selectedOptionText = listDropdown[0][1]
-        selectedOptionIndex = listDropdown[0][0]
+    if(preloadedDataTarea == null){
+        titulo = preloadedDataTipoTarea?.titulo?:""
     }
 
 
-
-
+    if (modalTitulo != "Crear tipo Tarea" && modalTitulo != "Editar Tipo Tarea"){
+        if (preloadedDataTarea != null) {
+            val tipoTareaSeleccionada = listDropdown.find { it[0] == preloadedDataTarea.tipotareaId.toString() }
+            if (listDropdown.isNotEmpty() && tipoTareaSeleccionada != null) {
+                selectedOptionText = tipoTareaSeleccionada[1]
+                selectedOptionIndex = tipoTareaSeleccionada[0]
+            } else {
+                selectedOptionText = "Sin opciones"
+                selectedOptionIndex = "-1"
+            }
+        }
+    }
     Dialog(onDismissRequest = {  }) {
         Card(
             modifier = Modifier
@@ -409,14 +416,6 @@ fun ModalWindow(
             Column {
                 Text(text = modalTitulo, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                 Spacer(Modifier.height(5.dp))
-                if (modalTitulo == "Crear Tarea" || modalTitulo == "Crear tipo Tarea"){
-                    TextField(
-                        value = id,
-                        onValueChange = { id = it },
-                        label = { Text("Id") },
-                        isError = id.isEmpty()
-                    )
-                }
                 TextField(
                     value = titulo,
                     onValueChange = { titulo = it },
@@ -487,22 +486,23 @@ fun ModalWindow(
                                 try {
                                     when (modalTitulo) {
                                         "Crear Tarea" -> {
-                                            if(id.isNotEmpty() && titulo.isNotEmpty() && descripcion.isNotEmpty() && tipotarea.isNotEmpty()){
+                                            Log.i("DAM2",selectedOptionText)
+                                            if(titulo.isNotEmpty() && descripcion.isNotEmpty() && tipotarea.isNotEmpty() && selectedOptionText !== "Sin opciones"){
                                                 Log.i("DAM2","Creado")
                                                 val indexValue = selectedOptionIndex
                                                 Log.i("DAM2", "Indice a crear: "+indexValue)
-                                                val tarea = Tareas(id.toInt(),titulo, descripcion, indexValue.toInt())
+                                                val tarea = Tareas(0,titulo, descripcion, indexValue.toInt())
                                                 database.TareasDao()
                                                     .insertTarea(tarea)
-                                                onTaskCreated?.invoke() // Actualizar la lista
-                                                onClose()
+                                                withContext(Dispatchers.Main) {
+                                                    onTaskCreated?.invoke() // Actualizar la lista
+                                                    onClose()
+                                                }
                                             }
                                         }
                                         "Editar Tarea" -> {
-                                            if(index.isNotEmpty() && titulo.isNotEmpty() && descripcion.isNotEmpty() && tipotarea.isNotEmpty()){
+                                            if(titulo.isNotEmpty() && descripcion.isNotEmpty() && tipotarea.isNotEmpty()){
                                                 Log.i("DAM2","Editar")
-
-
                                                 val indexValue = selectedOptionIndex
                                                 Log.i("DAM2", "Indice a actualizar: "+indexValue)
                                                 database.TareasDao()
@@ -513,12 +513,14 @@ fun ModalWindow(
                                             }
                                         }
                                         "Crear tipo Tarea" -> {
-                                            if(id.isNotEmpty() && titulo.isNotEmpty()){
-                                                val tipoTarea = TiposTareas(id.toInt(),titulo)
+                                            if(titulo.isNotEmpty()){
+                                                val tipoTarea = TiposTareas(0,titulo)
                                                 database.TareasDao()
                                                     .insertTipoTarea(tipoTarea)
-                                                onTaskCreated?.invoke() // Actualizar la lista
-                                                onClose()
+                                                withContext(Dispatchers.Main) {
+                                                    onTaskCreated?.invoke() // Actualizar la lista
+                                                    onClose()
+                                                }
                                             }
                                         }
                                         else -> {
@@ -545,7 +547,6 @@ fun ModalWindow(
         }
     }
 }
-
 
 @Composable
 fun AlertDialogModal(
@@ -588,4 +589,6 @@ fun AlertDialogModal(
         }
     )
 }
+
+
 
