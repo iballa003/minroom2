@@ -95,15 +95,9 @@ fun tareaApp(
         loadTareas()
     }
 
-
-
-
     tareasTipos?.forEach { tipotarea ->
         tareasListTipo.add(mutableListOf((tipotarea.id).toString(), tipotarea.titulo?:"Nada"))
     }
-
-
-
 
     Log.i("DAM23", tareasListTipo.toString())
     if (openDialog) {
@@ -132,13 +126,6 @@ fun tareaApp(
                 Text(text = "Tipos Tareas")
             }
         }
-
-
-
-
-
-
-
 
         Column(modifier = modifier.padding(start = 15.dp, end = 15.dp, top = 10.dp)
             .verticalScroll(rememberScrollState())) {
@@ -366,7 +353,6 @@ fun TipoTareaCard(
     }
 }
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ModalWindow(
@@ -391,7 +377,6 @@ fun ModalWindow(
     if(preloadedDataTarea == null){
         titulo = preloadedDataTipoTarea?.titulo?:""
     }
-
 
     if (modalTitulo != "Crear tipo Tarea" && modalTitulo != "Editar Tipo Tarea"){
         if (preloadedDataTarea != null) {
